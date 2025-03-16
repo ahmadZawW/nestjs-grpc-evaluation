@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package evaluation;
+
+service EvaluationService {
+  rpc Evaluate (EvaluationRequest) returns (EvaluationResponse);
+}
+
+message EvaluationRequest {
+  string message = 1;
+  repeated string possible_categories = 2;
+  repeated string true_classes = 3;
+  repeated string predicted_classes = 4;
+}
+
+message EvaluationResponse {
+  string result = 1;
+}
