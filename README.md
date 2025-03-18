@@ -51,9 +51,9 @@ The service exposes the `Evaluate` method under `EvaluationService`.
 ```json
 {
   "message": "Some input text",
-  "possible_categories": ["Category1", "Category2"],
-  "true_classes": ["Category1"],
-  "predicted_classes": ["Category2"]
+  "possibleCategories": ["Category1", "Category2"],
+  "trueClasses": ["Category1"],
+  "predictedClasses": ["Category2"]
 }
 ```
 
@@ -82,9 +82,9 @@ You can test the gRPC service using `grpcurl`:
 ```sh
 grpcurl -plaintext -d '{
   "message": "I need help setting up my new account, and I also want to report a bug in the checkout process.",
-  "possible_categories": ["question", "bug_report", "feature_request", "account_issue", "billing_problem"],
-  "true_classes": ["question", "bug_report", "account_issue"],
-  "predicted_classes": ["question", "account_issue", "feature_request"]
+  "possibleCategories": ["question", "bug_report", "feature_request", "account_issue", "billing_problem"],
+  "trueClasses": ["question", "bug_report", "account_issue"],
+  "predictedClasses": ["question", "account_issue", "feature_request"]
 }' localhost:50051 evaluation.EvaluationService/Evaluate
 ```
 

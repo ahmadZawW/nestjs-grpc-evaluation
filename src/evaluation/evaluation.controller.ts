@@ -1,40 +1,26 @@
-import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
-import { Observable, from } from 'rxjs';
-import { EvaluationRequest } from './interfaces/evaluation-request.interface';
-import { EvaluationResponse } from './interfaces/evaluation-response.interface';
-import OpenAI from 'openai';
-import * as dotenv from 'dotenv';
+import { Controller, InternalServerErrorException } from "@nestjs/common";
+import { GrpcMethod } from "@nestjs/microservices";
+import { Observable, from } from "rxjs";
+import { EvaluationRequest } from "./interfaces/evaluation-request.interface";
+import { EvaluationResponse } from "./interfaces/evaluation-response.interface";
+import { OpenaiService } from "../openai/openai.service";
 
-dotenv.config();
 
 @Controller()
 export class EvaluationController {
-  private openai: OpenAI;
+  constructor(private readonly openaiService: OpenaiService) {}
 
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-  }
-
-  @GrpcMethod('EvaluationService', 'Evaluate')
+  @GrpcMethod("EvaluationService", "Evaluate")
   evaluate(data: EvaluationRequest): Observable<EvaluationResponse> {
-    const { message, possible_categories, true_classes, predicted_classes } = data;
+    const { message, possibleCategories, trueClasses, predictedClasses } = data;
 
-    const prompt = ` You are an expert evaluation agent for a multi-class classification system. I need you to review the latest message and determine how well the predicted classes match the true classes.
+    const prompt = `I need you to review the latest message and determine how well the predicted classes match the true classes.
 
-    The message and classification details are between """:
-
-    """
-    Latest Message: ${message}
-
-    Possible Categories: ${possible_categories}
-
-    True Classes: ${true_classes}
-
-    Predicted Classes: ${predicted_classes}
-    """
+    The message and classification details are between tags <parameterName>  </parameterName>:
+    <message> ${message} </message>
+    <possibleCategories> ${possibleCategories} </possibleCategories>
+    <trueClasses> ${trueClasses} </trueClasses>
+    <predictedClasses> ${predictedClasses} </predictedClasses>
 
     Think through your evaluation step by step:
     1. First, understand what makes a message belong to each possible category
@@ -47,39 +33,29 @@ export class EvaluationController {
 
     {{
       "evaluation": {{
-        "jaccard_similarity": float, // intersection over union of true and predicted classes
-        "exact_match": boolean, // true if predicted exactly matches true classes
-        "class_analysis": [
+        "jaccardSimilarity": float, // intersection over union of true and predicted classes
+        "exactMatch": boolean, // true if predicted exactly matches true classes
+        "classAnalysis": [
           {{
-            "class": "class_name",
-            "correctly_predicted": boolean,
+            "class": "className",
+            "correctlyPredicted": boolean,
             "evidence": "Text evidence supporting this class",
             "confidence": "High/Medium/Low"
           }}
         ],
-        "overall_assessment": "Excellent/Good/Fair/Poor match between predictions and true classes",
-        "message_difficulty": "Easy/Medium/Hard to classify and why",
-        "improvement_suggestions": "Suggestions to improve classification accuracy"
+        "overallAssessment": "Excellent/Good/Fair/Poor match between predictions and true classes",
+        "messageDifficulty": "Easy/Medium/Hard to classify and why",
+        "improvementSuggestions": "Suggestions to improve classification accuracy"
       }}
     }}
-`    
-    // const messages = [
-    //     {"role": "system", "content": "You are an expert in multi-class natural language classification and evaluation."},
-    //     {"role": "user", "content": prompt}
-    // ];
-
-
-    return from(
-      this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: 'You are an expert in multi-class natural language classification and evaluation.' },
-          { role: 'user', content: prompt },
-        ],
-        temperature: 0,
-      }).then((response) => {
-        return { result: response.choices[0].message?.content || '' };
-      }),
-    );
+`;
+    try {
+      return from(this.openaiService.evaluate(prompt));
+    } catch (error) {
+      console.error("gRPC OpenAI Error:", error);
+      throw new InternalServerErrorException(
+        "Error processing OpenAI completion request."
+      );
+    }
   }
 }

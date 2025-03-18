@@ -8,9 +8,9 @@ service EvaluationService {
 
 message EvaluationRequest {
   string message = 1;
-  repeated string possible_categories = 2;
-  repeated string true_classes = 3;
-  repeated string predicted_classes = 4;
+  repeated string possibleCategories = 2;
+  repeated string trueClasses = 3;
+  repeated string predictedClasses = 4;
 }
 
 message EvaluationResponse {

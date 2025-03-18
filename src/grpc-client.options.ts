@@ -6,13 +6,10 @@ export const grpcClientOptions: GrpcOptions = {
   transport: Transport.GRPC,
   options: {
     package: ['evaluation'],
-    protoPath: [ join(__dirname, './evaluation/evaluation.proto')],
+    protoPath: [join(__dirname, './evaluation/evaluation.proto')],
     url: '0.0.0.0:50051',
     onLoadPackageDefinition: (pkg, server) => {
       new ReflectionService(pkg).addToServer(server);
-    },
-    loader: {
-      keepCase: true,
     },
   },
   
